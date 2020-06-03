@@ -213,10 +213,9 @@ class GameManager {
                     jog.pecasRemovidas.forEach((peca) => {
                         this.matrizPecas[peca.posicaoTabuleiro.x][peca.posicaoTabuleiro.y] = undefined;
                         peca.mesh.dispose();
-                    })
-                    
-                    
-                    if((pecaObj.posicaoTabuleiro.x == TamTabuleiro - 1 && pecaObj.jogador == jogadores.Jogador1) || (pecaObj.posicaoTabuleiro.x == 0 && pecaObj.jogador == jogadores.Jogador2)){
+                    });
+
+                    if ((pecaObj.posicaoTabuleiro.x == TamTabuleiro - 1 && pecaObj.jogador == jogadores.Jogador1) || (pecaObj.posicaoTabuleiro.x == 0 && pecaObj.jogador == jogadores.Jogador2)) {
                         pecaObj.TransformarEmDama();
                         this.VincularEventosPeca(pecaObj);
                     }
@@ -250,11 +249,7 @@ class GameManager {
             linha.forEach((pecaObj) => {
                 if (pecaObj && jogador == pecaObj.jogador) {
                     // Gerar as jogadas possíveis para essa peça
-                    let jogadas = [];
-                    if (pecaObj.dama)
-                        jogadas = this.GerarProximosMovimentosDama(pecaObj, pecaObj.posicaoTabuleiro, undefined, [], true);
-                    else
-                        jogadas = this.GerarProximosMovimentos(pecaObj, pecaObj.posicaoTabuleiro, 0, []);
+                    let jogadas = this.GerarProximosMovimentos(pecaObj, pecaObj.posicaoTabuleiro, undefined, [], true, pecaObj.dama);
 
                     pecaObj.proximaJogadas = jogadas;
 
@@ -278,76 +273,8 @@ class GameManager {
         });
     }
 
-    // Método para gerar movimentos para peças comuns
-    GerarProximosMovimentos(pecaObj, posAtual, qtdMov, pecasRemovidas) {
-        let listaJogadas = [];
-        let maxPecasRemovidas = 0;
-
-        // for para gerar as jogadas de cada peça
-        for (var i = -1; i <= 1; i += 2) {
-            for (var j = -1; j <= 1; j += 2) {
-                let direcao = new BABYLON.Vector2(i, j);    // Direção em que a peça vai se movimentar
-                let x = posAtual.x + direcao.x, y = posAtual.y + direcao.y;
-                let dirValida = ((direcao.x > 0 && pecaObj.jogador == jogadores.Jogador1) || (direcao.x < 0 && pecaObj.jogador == jogadores.Jogador2)); // Validar se peça pode se movimentar para este lado
-
-                //Se movimento está dentro do tabuleiro
-                if (x >= 0 && x < TamTabuleiro && y >= 0 && y < TamTabuleiro) {
-                    // Se for o primeiro movimento e o campo está vazio, apenas adiciona a jogada a lista
-                    if (!this.matrizPecas[x][y] && dirValida && qtdMov == 0)
-                        listaJogadas.push(new Jogadas(new BABYLON.Vector2(x, y)));
-                    // Se o campo possui uma peça inimiga, verificar se o campo atrás esta livre, se estiver adicionar jogada a lista
-                    else if (this.matrizPecas[x][y] && this.matrizPecas[x][y].jogador != pecaObj.jogador && !pecasRemovidas.includes(this.matrizPecas[x][y]) && x + direcao.x >= 0 && x + direcao.x < TamTabuleiro && y + direcao.y >= 0 && y + direcao.y < TamTabuleiro) {
-                        let x2 = x + direcao.x;
-                        let y2 = y + direcao.y;
-                        // Validando se posição está dentro do tabuleiro e se campo está vazio
-                        if (x2 >= 0 && x2 < TamTabuleiro && y2 >= 0 && y2 < TamTabuleiro && !this.matrizPecas[x2][y2]) {
-                            let jogadas = [new Jogadas(new BABYLON.Vector2(x2, y2))];
-                            jogadas[0].pecasRemovidas.push(this.matrizPecas[x][y]);
-                            let pecasRemovidasAux = pecasRemovidas.slice();
-                            pecasRemovidasAux.push(this.matrizPecas[x][y]);
-                            // Caso removido uma peça, verificar recursivamente se é possível remover outra peça na nova posição
-                            let proximaJogadas = this.GerarProximosMovimentos(pecaObj, new BABYLON.Vector2(x2, y2), qtdMov + 1, pecasRemovidasAux);
-
-                            // Caso encontrado mais peças para remover, adicionar a lista de movimentos da jogada
-                            if (proximaJogadas && proximaJogadas.length > 0) {
-                                let jogadaOriginal = jogadas[0].clone();
-                                jogadas = [];
-
-                                proximaJogadas.forEach((jog) => {
-                                    jogadaOriginal.objetivo = jog.objetivo;
-                                    jogadaOriginal.pecasRemovidas = jogadaOriginal.pecasRemovidas.concat(jog.pecasRemovidas);
-                                    jogadaOriginal.listaMovimentos = jogadaOriginal.listaMovimentos.concat(jog.listaMovimentos);
-                                    jogadas.push(jogadaOriginal);
-                                });
-                            }
-
-                            listaJogadas = listaJogadas.concat(jogadas);
-
-                            // Se a quantidade de peças removidas for maior que o maximo atual, atualizar o maximo atual para corresponder
-                            jogadas.forEach((jog) => {
-                                if (jog.pecasRemovidas.length > maxPecasRemovidas) {
-                                    maxPecasRemovidas = jog.pecasRemovidas.length;
-                                }
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-        let listaFiltrada = [];
-        // forEach para filtrar apenas as jogadas que removem o maximo possível
-        listaJogadas.forEach((jog) => {
-            if (jog.pecasRemovidas.length == maxPecasRemovidas) {
-                listaFiltrada.push(jog);
-            }
-        });
-
-        return listaFiltrada;
-    }
-
-    // Método para gerar movimentos para damas
-    GerarProximosMovimentosDama(pecaObj, posAtual, direcaoObj, pecasRemovidas, movIni) {
+    // Método para gerar os movimentos possíveis
+    GerarProximosMovimentos(pecaObj, posAtual, direcaoObj, pecasRemovidas, movIni, dama) {
         let listaJogadas = [];
         let maxPecasRemovidas = 0;
         let movValido = movIni;
@@ -359,6 +286,7 @@ class GameManager {
                 let direcao = new BABYLON.Vector2(i, j);    //Direção em que a peça vai se movimentar
                 let pecasRemovidasDir = [];
                 let x = posAtual.x + direcao.x, y = posAtual.y + direcao.y;
+                let dirValida = (dama || (direcao.x > 0 && pecaObj.jogador == jogadores.Jogador1) || (direcao.x < 0 && pecaObj.jogador == jogadores.Jogador2)); // Validar se peça pode se movimentar para este lado
                 let houvePecaRemovida = false;
 
                 while (x >= 0 && x < TamTabuleiro && y >= 0 && y < TamTabuleiro && (!direcaoObj || (direcaoObj.x == direcao.x && direcaoObj.y == direcao.y))) {
@@ -385,13 +313,15 @@ class GameManager {
                             if (novaJogada.pecasRemovidas.length > maxPecasRemovidas)
                                 maxPecasRemovidas = novaJogada.pecasRemovidas.length;
                         }
+                        else if (!dirValida)
+                            break;
 
                         if (movValido) {
                             listaJogadas.push(novaJogada);
 
                             if (houvePecaRemovida) {
-                                let jogadasRot1 = this.GerarProximosMovimentosDama(pecaObj, new BABYLON.Vector2(x, y), new BABYLON.Vector2(direcao.x, -direcao.y), pecasRemovidas.slice(), false);
-                                let jogadasRot2 = this.GerarProximosMovimentosDama(pecaObj, new BABYLON.Vector2(x, y), new BABYLON.Vector2(-direcao.x, direcao.y), pecasRemovidas.slice(), false);
+                                let jogadasRot1 = this.GerarProximosMovimentos(pecaObj, new BABYLON.Vector2(x, y), new BABYLON.Vector2(direcao.x, -direcao.y), pecasRemovidas.slice(), false, dama);
+                                let jogadasRot2 = this.GerarProximosMovimentos(pecaObj, new BABYLON.Vector2(x, y), new BABYLON.Vector2(-direcao.x, direcao.y), pecasRemovidas.slice(), false, dama);
 
                                 jogadasRot1.forEach((jog) => {
                                     if (jog.pecasRemovidas.length > 0) {
@@ -420,11 +350,30 @@ class GameManager {
                                         listaJogadas.push(novaJog);
                                     }
                                 });
+
+                                if (!dama) {
+                                    let jogadasRot3 = this.GerarProximosMovimentos(pecaObj, new BABYLON.Vector2(x, y), new BABYLON.Vector2(direcao.x, direcao.y), pecasRemovidas.slice(), false, dama);
+
+                                    jogadasRot3.forEach((jog) => {
+                                        let novaJog = novaJogada.clone();
+                                        novaJog.objetivo = jog.objetivo;
+                                        novaJog.listaMovimentos = novaJog.listaMovimentos.concat(jog.listaMovimentos);
+                                        novaJog.pecasRemovidas = novaJog.pecasRemovidas.concat(jog.pecasRemovidas);
+
+                                        if (novaJog.pecasRemovidas.length > maxPecasRemovidas)
+                                            maxPecasRemovidas = novaJog.pecasRemovidas.length;
+
+                                        listaJogadas.push(novaJog);
+                                    });
+                                }
                             }
                         }
 
                         x += direcao.x;
                         y += direcao.y;
+
+                        if (!dama)
+                            break;
                     }
                     else
                         break;
