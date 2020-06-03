@@ -15,7 +15,7 @@ class Peca {
     }
 
     CriarPeca(x, y, z) {
-        var peca = BABYLON.MeshBuilder.CreateCylinder('peça', { diameter: 0.9, height: 0.5, tesselation: 64 }, this.scene);
+        var peca = BABYLON.MeshBuilder.CreateCylinder('peça', { diameter: 0.9, height: 0.3, tesselation: 64 }, this.scene);
         peca.position.x = x;
         peca.position.y = y;
         peca.position.z = z;
@@ -36,5 +36,19 @@ class Peca {
         jogador2Material.diffuseColor = new BABYLON.Color3(0, 0, 0);
 
         return [jogador1Material, jogador2Material];
+    }
+
+    TransformarEmDama(){
+        let dama = BABYLON.MeshBuilder.CreateCylinder('dama', { diameter: 0.9, height: 0.3, tesselation: 64}, this.scene);
+        let position = this.mesh.position.clone();
+        dama.position = new BABYLON.Vector3(0, 0, 0);
+        dama.position.y += 0.3;
+        dama.material = this.mesh.material;
+
+        this.mesh.position = new BABYLON.Vector3(0, 0, 0);
+        this.mesh = BABYLON.Mesh.MergeMeshes([this.mesh, dama]);
+        this.mesh.position = position;
+        
+        this.dama = true;
     }
 }
