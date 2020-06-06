@@ -57,9 +57,7 @@
 
         var engine = null;
         var scene = null;
-        var jogadorAtual = jogadores.Jogador1;
-        var matrizTabuleiro = null;
-        var matrizPecas = [];
+        var gameManager = undefined;
         var createDefaultEngine = function () { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true }); };
 
         var createScene = function () {
@@ -97,7 +95,6 @@
 
         engine.runRenderLoop(function () {
             if (scene) {
-                //checkHoveringBox();
                 scene.render();
             }
         });

@@ -7,39 +7,44 @@ class Tabuleiro {
         this.materialsTabuleiro = this.CriarMaterials();
         this.scene = scene;
 
-        if(!Tabuleiro.highlightCasas)
+        this.borda1 = undefined;
+        this.borda2 = undefined;
+        this.borda3 = undefined;
+        this.borda4 = undefined;
+
+        if (!Tabuleiro.highlightCasas)
             Tabuleiro.highlightCasas
     }
 
     CriarTabuleiro() {
         for (var i = 0; i < TamTabuleiro; i++) {
             for (var j = 0; j < TamTabuleiro; j++) {
-                this.tabuleiro[i][j] = this.CriarCasa(PosLinInicial + i, 0, PosColInicial + j, this.materialsTabuleiro[(i+j) % 2]);
+                this.tabuleiro[i][j] = this.CriarCasa(PosLinInicial + i, 0, PosColInicial + j, this.materialsTabuleiro[(i + j) % 2]);
             }
         }
 
-        var borda1 = BABYLON.MeshBuilder.CreateBox('borda', { height: 0.7, width: 1, depth: 10 }, this.scene);
-        var borda2 = BABYLON.MeshBuilder.CreateBox('borda', { height: 0.7, width: 1, depth: 10 }, this.scene);
-        var borda3 = BABYLON.MeshBuilder.CreateBox('borda', { height: 0.7, width: 1, depth: 8 }, this.scene);
-        var borda4 = BABYLON.MeshBuilder.CreateBox('borda', { height: 0.7, width: 1, depth: 8 }, this.scene);
+        this.borda1 = BABYLON.MeshBuilder.CreateBox('borda', { height: 0.7, width: 1, depth: 10 }, this.scene);
+        this.borda2 = BABYLON.MeshBuilder.CreateBox('borda', { height: 0.7, width: 1, depth: 10 }, this.scene);
+        this.borda3 = BABYLON.MeshBuilder.CreateBox('borda', { height: 0.7, width: 1, depth: 8 }, this.scene);
+        this.borda4 = BABYLON.MeshBuilder.CreateBox('borda', { height: 0.7, width: 1, depth: 8 }, this.scene);
 
-        borda1.position.y = 0.1;
-        borda1.position.z = 4.5;
-        borda1.rotation.y = Math.PI / 2;
-        borda1.material = this.materialsTabuleiro[2];
+        this.borda1.position.y = 0.1;
+        this.borda1.position.z = 4.5;
+        this.borda1.rotation.y = Math.PI / 2;
+        this.borda1.material = this.materialsTabuleiro[2];
 
-        borda2.position.y = 0.1;
-        borda2.position.z = -4.5;
-        borda2.rotation.y = Math.PI / 2;
-        borda2.material = this.materialsTabuleiro[2];
+        this.borda2.position.y = 0.1;
+        this.borda2.position.z = -4.5;
+        this.borda2.rotation.y = Math.PI / 2;
+        this.borda2.material = this.materialsTabuleiro[2];
 
-        borda3.position.y = 0.1;
-        borda3.position.x = 4.5;
-        borda3.material = this.materialsTabuleiro[2];
+        this.borda3.position.y = 0.1;
+        this.borda3.position.x = 4.5;
+        this.borda3.material = this.materialsTabuleiro[2];
 
-        borda4.position.y = 0.1;
-        borda4.position.x = -4.5;
-        borda4.material = this.materialsTabuleiro[2];
+        this.borda4.position.y = 0.1;
+        this.borda4.position.x = -4.5;
+        this.borda4.material = this.materialsTabuleiro[2];
 
         return this.tabuleiro;
     }
@@ -72,5 +77,18 @@ class Tabuleiro {
         casa.position.z = z;
 
         return casa;
+    }
+
+    DestruirTabuleiro() {
+        for (var i = 0; i < TamTabuleiro; i++) {
+            for (var j = 0; j < TamTabuleiro; j++) {
+                this.tabuleiro[i][j].dispose();
+            }
+        }
+
+        this.borda1.dispose();
+        this.borda2.dispose();
+        this.borda3.dispose();
+        this.borda4.dispose();
     }
 }

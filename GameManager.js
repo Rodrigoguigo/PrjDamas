@@ -1,11 +1,15 @@
 class GameManager {
     constructor(scene) {
         this.scene = scene;
+        this.tabuleiro = undefined;
         this.matrizTabuleiro = null;
         this.matrizPecas = [];
         this.proximasJogadas = [];
         this.jogadorAtual = jogadores.Jogador1;
         this.pecaSelecionada = undefined;
+        this.txtJogadorAtual = undefined;
+        this.txtVencedor = undefined;
+        this.btnReset = undefined;
         this.highlightPeca = new BABYLON.HighlightLayer("highlightPeça", scene);
         this.highlightPecaSel = new BABYLON.HighlightLayer("highlightPeçaSelecionada", scene);
         this.highlightPecaRem = new BABYLON.HighlightLayer("highlightPeçaRemovida", scene);
@@ -14,8 +18,9 @@ class GameManager {
 
     // Criação do ambiente inicial
     CriarAmbienteInicial() {
-        let tabuleiro = new Tabuleiro();
-        this.matrizTabuleiro = tabuleiro.CriarTabuleiro();
+        this.tabuleiro = new Tabuleiro();
+        this.matrizTabuleiro = this.tabuleiro.CriarTabuleiro();
+        this.jogadorAtual = jogadores.Jogador1;
 
         for (var i = 0; i < TamTabuleiro; i++) {
             this.matrizPecas[i] = new Array(8);
@@ -41,74 +46,71 @@ class GameManager {
             }
         }
 
+        this.CriarGUI();
         this.GerarJogadasPossiveis(this.jogadorAtual);
     }
 
-    //Método utilizado para criar ambientes para testes
-    CriarAmbienteTeste() {
-        let tabuleiro = new Tabuleiro();
-        this.matrizTabuleiro = tabuleiro.CriarTabuleiro();
+    CriarGUI() {
+        var gui = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("myUI");
 
-        for (var i = 0; i < TamTabuleiro; i++) {
-            this.matrizPecas[i] = new Array(8);
+        this.txtJogadorAtual = new BABYLON.GUI.TextBlock();
+        this.txtJogadorAtual.text = "Turno do jogador 1";
+        this.txtJogadorAtual.color = "red";
+        this.txtJogadorAtual.fontSize = 70;
+        this.txtJogadorAtual.top = "-40%";
+
+        this.txtVencedor = new BABYLON.GUI.TextBlock();
+        this.txtVencedor.text = "Jogador x Venceu!";
+        this.txtVencedor.color = "yellow";
+        this.txtVencedor.fontSize = 120;
+        this.txtVencedor.isVisible = false;
+
+        //Reset Button
+        this.btnReset = BABYLON.GUI.Button.CreateSimpleButton("btnReset", "Reiniciar");
+        this.btnReset.top = "40%";
+        this.btnReset.left = "0px";
+        this.btnReset.width = "200px";
+        this.btnReset.height = "50px";
+        this.btnReset.thickness = 4;
+        this.btnReset.children[0].color = "#DFF9FB";
+        this.btnReset.children[0].fontSize = 24;
+        this.btnReset.color = "#FF7979";
+        this.btnReset.background = "#EB4D4B"
+
+        var onBtnResetClick = () => {
+            this.tabuleiro.DestruirTabuleiro();
+            this.matrizPecas.forEach((linha) => {
+                linha.forEach((col) => {
+                    if (col) {
+                        col.mesh.dispose();
+                    }
+                })
+            });
+            this.btnReset.dispose();
+            this.txtJogadorAtual.dispose();
+            this.txtVencedor.dispose();
+            this.CriarAmbienteInicial();
         }
 
-        // Criação das peças do jogador 1
-        let jogador = jogadores.Jogador1;
-        let peca = new Peca(7, 1, jogador, this.scene);
-        this.matrizPecas[7][1] = peca;
-        this.VincularEventosPeca(peca);
+        this.btnReset.onPointerClickObservable.add(onBtnResetClick);
 
-        this.matrizPecas[7][1].TransformarEmDama();
-        this.VincularEventosPeca(peca);
-
-        // Criação das peças do jogador 2
-        jogador = jogadores.Jogador2;
-        peca = new Peca(1, 1, jogador, this.scene);
-        this.matrizPecas[1][1] = peca;
-        this.VincularEventosPeca(peca);
-
-        peca = new Peca(5, 1, jogador, this.scene);
-        this.matrizPecas[5][1] = peca;
-        this.VincularEventosPeca(peca);
-
-        peca = new Peca(4, 2, jogador, this.scene);
-        this.matrizPecas[4][2] = peca;
-        this.VincularEventosPeca(peca);
-
-        peca = new Peca(2, 2, jogador, this.scene);
-        this.matrizPecas[2][2] = peca;
-        this.VincularEventosPeca(peca);
-
-        peca = new Peca(1, 5, jogador, this.scene);
-        this.matrizPecas[1][5] = peca;
-        this.VincularEventosPeca(peca);
-
-        peca = new Peca(5, 5, jogador, this.scene);
-        this.matrizPecas[5][5] = peca;
-        this.VincularEventosPeca(peca);
-
-        peca = new Peca(4, 4, jogador, this.scene);
-        this.matrizPecas[4][4] = peca;
-        this.VincularEventosPeca(peca);
-
-        peca = new Peca(2, 4, jogador, this.scene);
-        this.matrizPecas[2][4] = peca;
-        this.VincularEventosPeca(peca);
-
-        peca = new Peca(6, 6, jogador, this.scene);
-        this.matrizPecas[6][6] = peca;
-        this.VincularEventosPeca(peca);
-
-        this.GerarJogadasPossiveis(this.jogadorAtual);
+        gui.addControl(this.txtJogadorAtual);
+        gui.addControl(this.txtVencedor);
+        gui.addControl(this.btnReset);
     }
 
     // Método para trocar de turno
     TrocarTurno() {
-        if (this.jogadorAtual == jogadores.Jogador1)
+        if (this.jogadorAtual == jogadores.Jogador1) {
             this.jogadorAtual = jogadores.Jogador2;
-        else
+            this.txtJogadorAtual.text = "Turno do jogador 2";
+            this.txtJogadorAtual.color = "blue";
+        }
+        else {
             this.jogadorAtual = jogadores.Jogador1;
+            this.txtJogadorAtual.text = "Turno do jogador 1";
+            this.txtJogadorAtual.color = "red";
+        }
 
         //Removendo todos os highlights e peça selecionada
         this.highlightPeca.removeAllMeshes();
@@ -117,8 +119,38 @@ class GameManager {
         this.highlightPecaRem.removeAllMeshes();
         this.pecaSelecionada = undefined;
 
-        // Ao finalizar um turno, é gerado todas as jogadas possíveis para o jogador
-        this.GerarJogadasPossiveis(this.jogadorAtual)
+        if (!this.VerificarVitoria()) {
+            // Ao finalizar um turno, é gerado todas as jogadas possíveis para o jogador
+            this.GerarJogadasPossiveis(this.jogadorAtual)
+        }
+    }
+
+    VerificarVitoria() {
+        let qtdJ1 = 0;
+        let qtdJ2 = 0;
+        this.matrizPecas.forEach((linha) => {
+            linha.forEach((col) => {
+                if (col) {
+                    if (col.jogador == jogadores.Jogador1)
+                        qtdJ1++;
+                    else
+                        qtdJ2++;
+                }
+            });
+        });
+
+        if (qtdJ1 == 0) {
+            this.txtVencedor.text = "Jogador 2 Venceu!";
+            this.txtVencedor.isVisible = true;
+            return true;
+        }
+        else if (qtdJ2 == 0) {
+            this.txtVencedor.text = "Jogador 1 Venceu!";
+            this.txtVencedor.isVisible = true;
+            return true;
+        }
+
+        return false;
     }
 
     // Método para vincular os eventos de hover e click na peça
@@ -207,23 +239,70 @@ class GameManager {
                     this.matrizPecas[jog.objetivo.x][jog.objetivo.y] = pecaObj;
 
                     pecaObj.posicaoTabuleiro = new BABYLON.Vector2(jog.objetivo.x, jog.objetivo.y);
-                    pecaObj.mesh.position = new BABYLON.Vector3(casaObj.position.x, pecaObj.mesh.position.y, casaObj.position.z);
-                    this.DesvincularEventosCasa(pecaObj);
 
-                    jog.pecasRemovidas.forEach((peca) => {
-                        this.matrizPecas[peca.posicaoTabuleiro.x][peca.posicaoTabuleiro.y] = undefined;
-                        peca.mesh.dispose();
+
+                    //Position Animation
+                    var frameRate = 60;
+                    var framePorMovimento = 10;
+                    var frameAtual = framePorMovimento;
+                    var posicaoAtual = pecaObj.mesh.position;
+                    var move = new BABYLON.Animation("move", "position", frameRate, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+
+                    var keyFramesP = [];
+
+                    keyFramesP.push({
+                        frame: 0,
+                        value: pecaObj.mesh.position
                     });
 
-                    if ((pecaObj.posicaoTabuleiro.x == TamTabuleiro - 1 && pecaObj.jogador == jogadores.Jogador1) || (pecaObj.posicaoTabuleiro.x == 0 && pecaObj.jogador == jogadores.Jogador2)) {
-                        pecaObj.TransformarEmDama();
-                        this.VincularEventosPeca(pecaObj);
-                    }
+                    jog.listaMovimentos.forEach((mov) => {
+                        let casa = this.matrizTabuleiro[mov.x][mov.y];
+                        let casaMetade = BABYLON.Vector3.Center(posicaoAtual, casa.position);
 
-                    this.TrocarTurno();
+                        keyFramesP.push({
+                            frame: frameAtual,
+                            value: new BABYLON.Vector3(casaMetade.x, pecaObj.mesh.position.y + 2, casaMetade.z)
+                        });
+
+                        frameAtual += framePorMovimento;
+
+                        keyFramesP.push({
+                            frame: frameAtual,
+                            value: new BABYLON.Vector3(casa.position.x, pecaObj.mesh.position.y, casa.position.z)
+                        });
+
+                        frameAtual += framePorMovimento;
+                        posicaoAtual = casa.position;
+                    });
+
+                    move.setKeys(keyFramesP);
+
+                    pecaObj.mesh.animations.push(move);
+
+                    setTimeout(async () => {
+                        var newAnimation = scene.beginAnimation(pecaObj.mesh, 0, frameAtual, false, 1, () => {
+                            this.AposMovimentarPeca(pecaObj, jog.pecasRemovidas);
+                        });
+                    });
+
+                    this.DesvincularEventosCasa(pecaObj);
                 }));
             })
         }
+    }
+
+    AposMovimentarPeca(pecaObj, pecasRemovidas) {
+        pecasRemovidas.forEach((peca) => {
+            this.matrizPecas[peca.posicaoTabuleiro.x][peca.posicaoTabuleiro.y] = undefined;
+            peca.mesh.dispose();
+        });
+
+        if ((pecaObj.posicaoTabuleiro.x == TamTabuleiro - 1 && pecaObj.jogador == jogadores.Jogador1) || (pecaObj.posicaoTabuleiro.x == 0 && pecaObj.jogador == jogadores.Jogador2)) {
+            pecaObj.TransformarEmDama();
+            this.VincularEventosPeca(pecaObj);
+        }
+
+        this.TrocarTurno();
     }
 
     // Método para descinvular os eventos de hover e click das caixas
@@ -278,8 +357,6 @@ class GameManager {
         let listaJogadas = [];
         let maxPecasRemovidas = 0;
         let movValido = movIni;
-
-        console.log(pecasRemovidas);
 
         for (var i = -1; i <= 1; i += 2) {
             for (var j = -1; j <= 1; j += 2) {
