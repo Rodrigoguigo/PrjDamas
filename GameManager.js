@@ -10,6 +10,7 @@ class GameManager {
         this.txtJogadorAtual = undefined;
         this.txtVencedor = undefined;
         this.btnReset = undefined;
+        this.visualizarMenu = undefined;
         this.highlightPeca = new BABYLON.HighlightLayer("highlightPeça", scene);
         this.highlightPecaSel = new BABYLON.HighlightLayer("highlightPeçaSelecionada", scene);
         this.highlightPecaRem = new BABYLON.HighlightLayer("highlightPeçaRemovida", scene);
@@ -47,11 +48,24 @@ class GameManager {
         }
 
         this.CriarGUI();
+
+        this.scene.actionManager = new BABYLON.ActionManager(this.scene);
+
+        this.scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction({
+            trigger: BABYLON.ActionManager.OnKeyDownTrigger,
+            parameter: 'm'
+        }, () => {
+            this.visualizarMenu();
+        }));
+
         this.GerarJogadasPossiveis(this.jogadorAtual);
     }
 
     CriarGUI() {
         var gui = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("myUI");
+
+        var width = window.innerWidth;
+        var height = window.innerHeight;
 
         this.txtJogadorAtual = new BABYLON.GUI.TextBlock();
         this.txtJogadorAtual.text = "Turno do jogador 1";
@@ -77,6 +91,64 @@ class GameManager {
         this.btnReset.color = "#FF7979";
         this.btnReset.background = "#EB4D4B"
 
+        //Textures rectangle
+        var sobreRect = new BABYLON.GUI.Rectangle();
+        sobreRect.top = "-50px";
+        sobreRect.width = "25%";
+        sobreRect.height = "700px";
+        sobreRect.cornerRadius = 20;
+        sobreRect.color = "white";
+        sobreRect.thickness = 4;
+        sobreRect.background = "gray";
+
+        var txtSobre = new BABYLON.GUI.TextBlock();
+        txtSobre.text = "SOBRE";
+        txtSobre.fontSize = 36;
+        txtSobre.top = "-350px";
+        txtSobre.color = "white";
+
+        var txtDupla = new BABYLON.GUI.TextBlock();
+        txtDupla.text = "Dupla:";
+        txtDupla.fontSize = 32;
+        txtDupla.top = "-275px";
+
+        var txtNomes = new BABYLON.GUI.TextBlock();
+        txtNomes.text = "Rodrigo Padilha Marques 171363\n Deiski Iuri Aoki 191471";
+        txtNomes.fontSize = 24;
+        txtNomes.top = "-225px";
+
+        var txtRegrasTitle = new BABYLON.GUI.TextBlock();
+        txtRegrasTitle.text = "Regras:"
+        txtRegrasTitle.fontSize = 32;
+        txtRegrasTitle.top = "-150px";
+
+        var txtRegras = new BABYLON.GUI.TextBlock();
+        txtRegras.text = "- Peças comuns só se movem pra frente\n\n"
+                        + "- Damas podem se movimentar livremente\n\n"
+                        + "- Captura de peças é obrigatório\n\n"
+                        + "- Quando tiverem duas ou mais capturas,deve ser\nrealizado a jogada com maior quantidade de capturas\n\n"
+                        + "- Capture todas as peças para vencer\n\n";
+
+        var txtControlesTitle = new BABYLON.GUI.TextBlock();
+        txtControlesTitle.top = "125px";
+        txtControlesTitle.text = "Controles:";
+        txtControlesTitle.fontSize = 32;
+
+        var txtControles = new BABYLON.GUI.TextBlock();
+        txtControles.top = "175px";
+        txtControles.text = "Clique na peça para ver as casas que ela pode se\n movimentar, clique na casa para movimentar a peça";
+
+        this.visualizarMenu = () => {
+            sobreRect.isVisible = !sobreRect.isVisible;
+            txtSobre.isVisible = !txtSobre.isVisible;
+            txtDupla.isVisible = !txtDupla.isVisible;
+            txtNomes.isVisible = !txtNomes.isVisible;
+            txtRegrasTitle.isVisible = !txtRegrasTitle.isVisible;
+            txtRegras.isVisible = !txtRegras.isVisible;
+            txtControlesTitle.isVisible = !txtControlesTitle.isVisible;
+            txtControles.isVisible = !txtControles.isVisible;
+        }
+
         var onBtnResetClick = () => {
             this.tabuleiro.DestruirTabuleiro();
             this.matrizPecas.forEach((linha) => {
@@ -89,14 +161,31 @@ class GameManager {
             this.btnReset.dispose();
             this.txtJogadorAtual.dispose();
             this.txtVencedor.dispose();
+            sobreRect.dispose();
+            txtSobre.dispose();
+            txtDupla.dispose();
+            txtNomes.dispose();
+            txtRegrasTitle.dispose();
+            txtRegras.dispose();
+            txtControlesTitle.dispose();
+            txtControles.dispose();
             this.CriarAmbienteInicial();
         }
 
         this.btnReset.onPointerClickObservable.add(onBtnResetClick);
+        this.visualizarMenu();
 
         gui.addControl(this.txtJogadorAtual);
         gui.addControl(this.txtVencedor);
         gui.addControl(this.btnReset);
+        gui.addControl(sobreRect);
+        gui.addControl(txtSobre);
+        gui.addControl(txtDupla);
+        gui.addControl(txtNomes);
+        gui.addControl(txtRegrasTitle);
+        gui.addControl(txtRegras);
+        gui.addControl(txtControlesTitle);
+        gui.addControl(txtControles);
     }
 
     // Método para trocar de turno
